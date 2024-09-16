@@ -54,6 +54,10 @@ class ShoppingListViewModel: ObservableObject {
         Dictionary(grouping: items, by: { $0.category })
     }
     
+    func removeCompletedItems() {
+        items.removeAll { $0.isCompleted }
+    }
+    
     func scheduleNotification(for item: ShoppingItem) {
         let content = UNMutableNotificationContent()
         content.title = "Shopping List"

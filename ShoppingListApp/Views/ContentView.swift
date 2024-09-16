@@ -1,35 +1,41 @@
-//
-//  ContentView.swift
-//  ShoppingListApp
-//
-//  Created by Anıl on 16.09.2024.
-//
-
 import SwiftUI
 
 struct ContentView: View {
     @StateObject private var viewModel = ShoppingListViewModel()
     @State private var newItemName: String = ""
-    @State private var isEditing: Bool = false
     
     var body: some View {
         NavigationView {
             VStack {
                 List {
                     ForEach(viewModel.itemsGroupedByCategory().keys.sorted(), id: \.self) { category in
-                        Section(header: Text(category)) {
+                        Section(header: HStack {
+                            Image(systemName: "cart.fill")
+                                .foregroundColor(.green)
+                            Text(category)
+                                .font(.headline)
+                        }) {
                             ForEach(viewModel.itemsGroupedByCategory()[category]!) { item in
                                 HStack {
                                     Text(item.name)
                                     Spacer()
-                                    Image(systemName: item.isCompleted ? "checkmark.circle.fill": "circle")
+                                    Image(systemName: item.isCompleted ? "checkmark.circle.fill" : "circle")
+                                        .foregroundColor(item.isCompleted ? .green : .red)
                                         .onTapGesture {
-                                            viewModel.toggleCompletion(of: item)
+                                            withAnimation(.spring()) {
+                                                viewModel.toggleCompletion(of: item)
+                                            }
                                         }
+                                    Text(item.name)
+                                        .strikethrough(item.isCompleted)
+                                        .font(.body)
+                                    Spacer()
                                 }
                                 .padding()
-                                .background(item.isCompleted ? Color.gray.opacity(0.2) : Color.clear)
-                                .cornerRadius(8)
+                                .background(RoundedRectangle(cornerRadius: 10)
+                                                .fill(Color.white)
+                                                .shadow(radius: 3))
+                                .padding(.vertical, 5)
                             }
                             .onDelete { indexSet in
                                 if let index = indexSet.first {
@@ -40,16 +46,15 @@ struct ContentView: View {
                             }
                         }
                     }
-                 }
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        EditButton()
-                    }
                 }
+                .listStyle(InsetGroupedListStyle())
                 
                 HStack {
                     TextField("Add new item", text: $newItemName)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .padding()
+                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
+                        .shadow(radius: 2)
+                        .frame(maxWidth: .infinity)
                     
                     Button(action: {
                         withAnimation {
@@ -59,13 +64,31 @@ struct ContentView: View {
                             }
                         }
                     }) {
-                        Image(systemName: "plus")
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundColor(.green)
+                            .font(.system(size: 24))
                     }
                     .padding(.leading, 10)
                 }
                 .padding()
             }
+
             .navigationTitle("Shopping List")
+            .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
+            .toolbar {
+                if viewModel.items.contains(where: { $0.isCompleted }) {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(action: {
+                            withAnimation {
+                                viewModel.removeCompletedItems()
+                            }
+                        }) {
+                            Text("Delete Completed")
+                                .foregroundColor(.red)
+                        }
+                    }
+                }
+            }
         }
     }
 }
